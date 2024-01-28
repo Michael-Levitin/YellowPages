@@ -1,3 +1,3 @@
-module github.com/Michael-Levitin/YellowPages/YellowPagesService
+module github.com/Michael-Levitin/YellowPages
 
 go 1.21.5

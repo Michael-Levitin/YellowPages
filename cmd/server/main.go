@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Michael-Levitin/YellowPages/internal/dto"
 	"log"
 	"net/http"
 )
@@ -30,14 +31,14 @@ type Origin struct {
 	} `json:"country"`
 }
 
-type Info struct {
-	Name       string `json:"name"`
-	Surname    string `json:"surname"`
-	Patronymic string `json:"patronymic"`
-	Age        int    `json:"age"`
-	Sex        string `json:"sex"`
-	Country    string `json:"country"`
-}
+//type Info struct {
+//	Name       string `json:"name"`
+//	Surname    string `json:"surname"`
+//	Patronymic string `json:"patronymic"`
+//	Age        int    `json:"age"`
+//	Sex        string `json:"sex"`
+//	Country    string `json:"country"`
+//}
 
 func getAge(name string) (int, error) {
 	resp, err := http.Get("https://api.agify.io/?name=" + name)
@@ -99,7 +100,7 @@ func updateInfo(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query() // Получаем все query параметры из URL запроса
 	// Если необходимо получить отдельные параметры, можно использовать методы Get, GetArray, GetBool и другие.
 
-	var info Info
+	var info dto.Info
 	info.Name = queryParams.Get("name")
 	info.Surname = queryParams.Get("surname")
 	info.Patronymic = queryParams.Get("patronymic")
