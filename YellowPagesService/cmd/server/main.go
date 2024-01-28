@@ -7,11 +7,6 @@ import (
 	"net/http"
 )
 
-type Name struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-}
-
 type Age struct {
 	Count int    `json:"count"`
 	Name  string `json:"name"`
@@ -33,6 +28,15 @@ type Origin struct {
 		CountryID   string  `json:"country_id"`
 		Probability float64 `json:"probability"`
 	} `json:"country"`
+}
+
+type Info struct {
+	Name       string `json:"name"`
+	Surname    string `json:"surname"`
+	Patronymic string `json:"patronymic"`
+	Age        int    `json:"age"`
+	Sex        string `json:"sex"`
+	Country    string `json:"Country"`
 }
 
 func getAge(w http.ResponseWriter, r *http.Request) {
@@ -93,10 +97,36 @@ func getNationality(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(country)
 }
 
+func updateInfo(w http.ResponseWriter, r *http.Request) {
+	queryParams := r.URL.Query() // Получаем все query параметры из URL запроса
+	// Если необходимо получить отдельные параметры, можно использовать методы Get, GetArray, GetBool и другие.
+	name := queryParams.Get("name")
+	surname := queryParams.Get("surname")
+	fmt.Fprintf(w, "param1: %s", name)
+	fmt.Fprintf(w, "param2: %s", surname)
+
+	resp, err := http.Get("https://api.nationalize.io/?name=Dmitriy")
+	if err != nil {
+		http.Error(w, "Failed to get name", http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	var country Info
+	if err := json.NewDecoder(resp.Body).Decode(&country); err != nil {
+		http.Error(w, "Failed to decode name", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(country)
+}
+
 func main() {
 	http.HandleFunc("/getAge", getAge)
 	http.HandleFunc("/getGender", getGender)
 	http.HandleFunc("/getNationality", getNationality)
+	http.HandleFunc("/updateInfo", updateInfo)
 	fmt.Println("server is running...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
