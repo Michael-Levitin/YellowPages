@@ -36,96 +36,106 @@ type Info struct {
 	Patronymic string `json:"patronymic"`
 	Age        int    `json:"age"`
 	Sex        string `json:"sex"`
-	Country    string `json:"Country"`
+	Country    string `json:"country"`
 }
 
-func getAge(w http.ResponseWriter, r *http.Request) {
-	// Получаем ФИО по API (это просто пример, здесь нужно заменить на реальный API)
-	// Пример: https://example.com/api/name
-	// Пример ответа: {"first_name": "John", "last_name": "Doe"}
-	resp, err := http.Get("https://api.agify.io/?name=Dmitriy")
+func getAge(name string) (int, error) {
+	resp, err := http.Get("https://api.agify.io/?name=" + name)
 	if err != nil {
-		http.Error(w, "Failed to get name", http.StatusInternalServerError)
-		return
+		return 0, err
 	}
 	defer resp.Body.Close()
 
-	var age Age
-	if err := json.NewDecoder(resp.Body).Decode(&age); err != nil {
-		http.Error(w, "Failed to decode name", http.StatusInternalServerError)
-		return
+	var answer Age
+	if err = json.NewDecoder(resp.Body).Decode(&answer); err != nil {
+		return 0, err
 	}
 
-	// Отправляем полученное ФИО в формате JSON
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(age)
+	return answer.Age, nil
 }
 
-func getGender(w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Get("https://api.genderize.io/?name=Dmitriy")
+func getGender(name string) (string, error) {
+	resp, err := http.Get("https://api.genderize.io/?name=" + name)
 	if err != nil {
-		http.Error(w, "Failed to get name", http.StatusInternalServerError)
-		return
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	var sex Gender
-	if err := json.NewDecoder(resp.Body).Decode(&sex); err != nil {
-		http.Error(w, "Failed to decode name", http.StatusInternalServerError)
-		return
+	var answer Gender
+	if err = json.NewDecoder(resp.Body).Decode(&answer); err != nil {
+		return "", err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sex)
+	return answer.Gender, nil
 }
 
-func getNationality(w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Get("https://api.nationalize.io/?name=Dmitriy")
+func getNationality(name string) (string, error) {
+	resp, err := http.Get("https://api.nationalize.io/?name=" + name)
 	if err != nil {
-		http.Error(w, "Failed to get name", http.StatusInternalServerError)
-		return
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	var country Origin
-	if err := json.NewDecoder(resp.Body).Decode(&country); err != nil {
-		http.Error(w, "Failed to decode name", http.StatusInternalServerError)
-		return
+	var answer Origin
+	if err = json.NewDecoder(resp.Body).Decode(&answer); err != nil {
+		return "", err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(country)
+	var country string
+	maxP := 0.0
+	for _, s := range answer.Country {
+		if s.Probability > maxP {
+			maxP = s.Probability
+			country = s.CountryID
+		}
+		if s.Probability > 0.5 {
+			break
+		}
+	}
+	return country, nil
 }
 
 func updateInfo(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query() // Получаем все query параметры из URL запроса
 	// Если необходимо получить отдельные параметры, можно использовать методы Get, GetArray, GetBool и другие.
-	name := queryParams.Get("name")
-	surname := queryParams.Get("surname")
-	fmt.Fprintf(w, "param1: %s", name)
-	fmt.Fprintf(w, "param2: %s", surname)
 
-	resp, err := http.Get("https://api.nationalize.io/?name=Dmitriy")
+	var info Info
+	info.Name = queryParams.Get("name")
+	info.Surname = queryParams.Get("surname")
+	info.Patronymic = queryParams.Get("patronymic")
+	if info.Name == "" || info.Surname == "" {
+		fmt.Fprintln(w, "both name and surname are required")
+		return
+	}
+
+	age, err := getAge(info.Name)
 	if err != nil {
-		http.Error(w, "Failed to get name", http.StatusInternalServerError)
+		fmt.Fprintln(w, err)
 		return
 	}
-	defer resp.Body.Close()
+	info.Age = age
 
-	var country Info
-	if err := json.NewDecoder(resp.Body).Decode(&country); err != nil {
-		http.Error(w, "Failed to decode name", http.StatusInternalServerError)
+	sex, err := getGender(info.Name)
+	if err != nil {
+		fmt.Fprintln(w, err)
 		return
 	}
+	info.Sex = sex
+
+	country, err := getNationality(info.Name)
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+	info.Country = country
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(country)
+	json.NewEncoder(w).Encode(info)
 }
 
+// http://localhost:8080/updateInfo?name=Andrej&surname=Sedov&patronymic=Aleksandorvich
+
 func main() {
-	http.HandleFunc("/getAge", getAge)
-	http.HandleFunc("/getGender", getGender)
-	http.HandleFunc("/getNationality", getNationality)
 	http.HandleFunc("/updateInfo", updateInfo)
 	fmt.Println("server is running...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
