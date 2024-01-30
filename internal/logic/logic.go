@@ -1,11 +1,30 @@
 package logic
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Michael-Levitin/YellowPages/internal/database"
 	"github.com/Michael-Levitin/YellowPages/internal/dto"
 	"net/http"
 )
+
+type PagesLogic struct {
+	PagesDB database.PagesDbI
+}
+
+// NewPagesLogic подключаем интерфейс БД в новую логику
+func NewPagesLogic(PagesDb database.PagesDbI) *PagesLogic {
+	return &PagesLogic{PagesDB: PagesDb}
+}
+
+func (p PagesLogic) GetInfo(ctx context.Context, info dto.Info) (dto.Info, error) {
+	return dto.Info{}, nil
+}
+
+func (p PagesLogic) SetInfo(ctx context.Context, info dto.Info) (dto.Info, error) {
+	return dto.Info{}, nil
+}
 
 func getAge(name string) (int, error) {
 	resp, err := http.Get("https://api.agify.io/?name=" + name)
