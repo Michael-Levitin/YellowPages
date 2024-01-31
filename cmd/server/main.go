@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/Michael-Levitin/YellowPages/config"
 	"github.com/Michael-Levitin/YellowPages/internal/database"
+	"github.com/Michael-Levitin/YellowPages/internal/delivery"
 	"github.com/Michael-Levitin/YellowPages/internal/logic"
 	"github.com/jackc/pgx/v5/pgxpool"
-	//_ "github.com/lib/pq"
 	"log"
 	"net/http"
 )
@@ -28,7 +28,11 @@ func main() {
 
 	database.SetInfo(db)
 
-	http.HandleFunc("/updateInfo", logic.UpdateInfo)
+	pagesDB := database.NewPagesDB(db)                 // подключаем бд
+	pagesLogic := logic.NewPagesLogic(pagesDB)         // подключаем бд к логике...
+	pagesServer := delivery.NewPagesServer(pagesLogic) // ... а логику в библиотеку
+
+	http.HandleFunc("/setInfo", pagesServer.SetInfo)
 	log.Println("server is running...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
