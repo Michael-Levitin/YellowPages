@@ -29,29 +29,12 @@ func (p PagesServer) SetInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	age, err := logic.GetAge(info.Name)
+	info, err := p.logic.SetInfo(context.TODO(), info)
 	if err != nil {
 		fmt.Fprintln(w, err)
 		return
 	}
-	info.Age = age
-
-	sex, err := logic.GetGender(info.Name)
-	if err != nil {
-		fmt.Fprintln(w, err)
-		return
-	}
-	info.Sex = sex
-
-	country, err := logic.GetNationality(info.Name)
-	if err != nil {
-		fmt.Fprintln(w, err)
-		return
-	}
-	info.Country = country
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(info)
-
-	p.logic.SetInfo(context.TODO(), info)
 }

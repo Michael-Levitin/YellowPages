@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/Michael-Levitin/YellowPages/internal/database"
 	"github.com/Michael-Levitin/YellowPages/internal/dto"
 	"net/http"
@@ -24,12 +23,14 @@ func (p PagesLogic) GetInfo(ctx context.Context, info dto.Info) (dto.Info, error
 }
 
 func (p PagesLogic) SetInfo(ctx context.Context, info dto.Info) (dto.Info, error) {
-	fmt.Println(info)
-	p.PagesDB.SetInfo(ctx, info)
-	return dto.Info{}, nil
+	info, err := getInfoApi(info)
+	if err != nil {
+		return dto.Info{}, err
+	}
+	return p.PagesDB.SetInfo(ctx, info)
 }
 
-func GetAge(name string) (int, error) {
+func getAge(name string) (int, error) {
 	resp, err := http.Get("https://api.agify.io/?name=" + name)
 	if err != nil {
 		return 0, err
@@ -44,7 +45,7 @@ func GetAge(name string) (int, error) {
 	return answer.Age, nil
 }
 
-func GetGender(name string) (string, error) {
+func getGender(name string) (string, error) {
 	resp, err := http.Get("https://api.genderize.io/?name=" + name)
 	if err != nil {
 		return "", err
@@ -59,7 +60,7 @@ func GetGender(name string) (string, error) {
 	return answer.Gender, nil
 }
 
-func GetNationality(name string) (string, error) {
+func getNationality(name string) (string, error) {
 	resp, err := http.Get("https://api.nationalize.io/?name=" + name)
 	if err != nil {
 		return "", err
@@ -86,3 +87,24 @@ func GetNationality(name string) (string, error) {
 }
 
 // http://localhost:8080/setInfo?name=Andrej&surname=Sedov&patronymic=Aleksandorvich
+
+func getInfoApi(info dto.Info) (dto.Info, error) {
+	age, err := getAge(info.Name)
+	if err != nil {
+		return dto.Info{}, err
+	}
+	info.Age = age
+
+	sex, err := getGender(info.Name)
+	if err != nil {
+		return dto.Info{}, err
+	}
+	info.Sex = sex
+
+	country, err := getNationality(info.Name)
+	if err != nil {
+		return dto.Info{}, err
+	}
+	info.Country = country
+	return info, nil
+}

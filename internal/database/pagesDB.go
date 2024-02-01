@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	_setInfoQuery = `INSERT INTO people_data  (name, surname, patronymic, age, sex, nationality)
+	_setInfoQuery = `
+INSERT INTO people_data  (name, surname, patronymic, age, sex, country)
 VALUES (@name, @surname, @patronymic, @age, @sex, @country)
 RETURNING id`
 )
