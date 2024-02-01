@@ -35,24 +35,24 @@ func (p PagesServer) SetInfo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(info)
 }
 
-func checkFIO(r *http.Request) (dto.Info, error) {
+func checkFIO(r *http.Request) (*dto.Info, error) {
 	var info dto.Info
 	queryParams := r.URL.Query() // Получаем все query параметры из URL запроса
 	info.Name = queryParams.Get("name")
 	info.Surname = queryParams.Get("surname")
 	info.Patronymic = queryParams.Get("patronymic")
 	if info.Name == "" || info.Surname == "" {
-		return dto.Info{}, fmt.Errorf("both name and surname are required")
+		return &dto.Info{}, fmt.Errorf("both name and surname are required")
 	}
 
 	if !isLetter(info.Name) || !isLetter(info.Surname) || !isLetter(info.Patronymic) {
-		return dto.Info{}, fmt.Errorf("full name must contain letters only")
+		return &dto.Info{}, fmt.Errorf("full name must contain letters only")
 	}
 
 	if !isCapital(info.Name) || !isCapital(info.Surname) || !isCapital(info.Patronymic) {
-		return dto.Info{}, fmt.Errorf("full name must be capitalizedddd")
+		return &dto.Info{}, fmt.Errorf("full name must be capitalizedddd")
 	}
-	return info, nil
+	return &info, nil
 }
 
 func isLetter(s string) bool {

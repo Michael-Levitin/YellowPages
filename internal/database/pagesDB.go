@@ -23,17 +23,17 @@ func NewPagesDB(db *pgxpool.Pool) *PagesDB {
 	return &PagesDB{db: db}
 }
 
-func (p PagesDB) GetInfo(ctx context.Context, info dto.Info) (dto.Info, error) {
-	return dto.Info{}, nil
+func (p PagesDB) GetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {
+	return &dto.Info{}, nil
 }
 
-func (p PagesDB) SetInfo(ctx context.Context, info dto.Info) (dto.Info, error) {
+func (p PagesDB) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {
 	var id int
 	err := p.db.QueryRow(context.TODO(), _setInfoQuery, pgx.NamedArgs(dto.Info2map(info))).Scan(&id)
 	info.Id = id
 	if err != nil {
 		log.Println("Could not add ", info, err)
-		return dto.Info{}, err
+		return &dto.Info{}, err
 	}
 	return info, nil
 }

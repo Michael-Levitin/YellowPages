@@ -33,7 +33,7 @@ type Origin struct {
 	} `json:"country"`
 }
 
-func Info2map(info Info) map[string]any {
+func Info2map(info *Info) map[string]any {
 	infoMap := make(map[string]any, 6)
 	infoMap["name"] = info.Name
 	infoMap["surname"] = info.Surname

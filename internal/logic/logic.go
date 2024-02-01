@@ -17,15 +17,15 @@ func NewPagesLogic(PagesDb database.PagesDbI) *PagesLogic {
 	return &PagesLogic{PagesDB: PagesDb}
 }
 
-func (p PagesLogic) GetInfo(ctx context.Context, info dto.Info) (dto.Info, error) {
+func (p PagesLogic) GetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {
 	p.PagesDB.GetInfo(ctx, info)
-	return dto.Info{}, nil
+	return &dto.Info{}, nil
 }
 
-func (p PagesLogic) SetInfo(ctx context.Context, info dto.Info) (dto.Info, error) {
+func (p PagesLogic) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {
 	info, err := getInfoApi(info)
 	if err != nil {
-		return dto.Info{}, err
+		return &dto.Info{}, err
 	}
 	return p.PagesDB.SetInfo(ctx, info)
 }
@@ -88,22 +88,22 @@ func getNationality(name string) (string, error) {
 
 // http://localhost:8080/setInfo?name=Andrej&surname=Sedov&patronymic=Aleksandorvich
 
-func getInfoApi(info dto.Info) (dto.Info, error) {
+func getInfoApi(info *dto.Info) (*dto.Info, error) {
 	age, err := getAge(info.Name)
 	if err != nil {
-		return dto.Info{}, err
+		return &dto.Info{}, err
 	}
 	info.Age = age
 
 	sex, err := getGender(info.Name)
 	if err != nil {
-		return dto.Info{}, err
+		return &dto.Info{}, err
 	}
 	info.Sex = sex
 
 	country, err := getNationality(info.Name)
 	if err != nil {
-		return dto.Info{}, err
+		return &dto.Info{}, err
 	}
 	info.Country = country
 	return info, nil
