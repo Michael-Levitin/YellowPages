@@ -31,3 +31,14 @@ type Origin struct {
 		Probability float64 `json:"probability"`
 	} `json:"country"`
 }
+
+func Info2map(info Info) map[string]any {
+	infoMap := make(map[string]any, 6)
+	infoMap["name"] = info.Name
+	infoMap["surname"] = info.Surname
+	infoMap["patronymic"] = info.Patronymic
+	infoMap["age"] = info.Age
+	infoMap["sex"] = info.Sex
+	infoMap["country"] = info.Country
+	return infoMap
+}

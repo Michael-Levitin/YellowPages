@@ -26,8 +26,6 @@ func main() {
 	log.Println("connected to database")
 	defer db.Close()
 
-	database.SetInfo(db)
-
 	pagesDB := database.NewPagesDB(db)                 // подключаем бд
 	pagesLogic := logic.NewPagesLogic(pagesDB)         // подключаем бд к логике...
 	pagesServer := delivery.NewPagesServer(pagesLogic) // ... а логику в библиотеку
