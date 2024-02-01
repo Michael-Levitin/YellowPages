@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"github.com/Michael-Levitin/YellowPages/internal/dto"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -29,8 +28,9 @@ func (p PagesDB) GetInfo(ctx context.Context, info dto.Info) (dto.Info, error) {
 }
 
 func (p PagesDB) SetInfo(ctx context.Context, info dto.Info) (dto.Info, error) {
-	fmt.Println(dto.Info2map(info))
-	_, err := p.db.Exec(context.TODO(), _setInfoQuery, pgx.NamedArgs(dto.Info2map(info)))
+	var id int
+	err := p.db.QueryRow(context.TODO(), _setInfoQuery, pgx.NamedArgs(dto.Info2map(info))).Scan(&id)
+	info.Id = id
 	if err != nil {
 		log.Println("Could not add ", info, err)
 		return dto.Info{}, err
