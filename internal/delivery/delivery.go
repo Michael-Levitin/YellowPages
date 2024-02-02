@@ -55,6 +55,26 @@ func (p PagesServer) GetInfo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (p PagesServer) DeleteInfo(w http.ResponseWriter, r *http.Request) {
+	info, err := getParam(r)
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+
+	people, err := p.logic.DeleteInfo(context.TODO(), info)
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, "deleted %d rows, folowing entries were deleted:\n", len(*people))
+	for _, info := range *people {
+		json.NewEncoder(w).Encode(info)
+	}
+}
+
 func checkFIO(r *http.Request) (*dto.Info, error) {
 	var info dto.Info
 	queryParams := r.URL.Query() // Получаем все query параметры из URL запроса

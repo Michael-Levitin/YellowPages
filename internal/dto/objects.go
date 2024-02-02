@@ -1,7 +1,6 @@
 package dto
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -51,7 +50,7 @@ func Info2map(info *Info) map[string]any {
 }
 
 func Info2String(info *Info) string {
-	fmt.Printf("Objects recieve %+v\n", info)
+	//fmt.Printf("Objects recieve %+v\n", info)
 	infoString := make([]string, 0, 8)
 	var s string
 	infoString = append(infoString, " true ")
@@ -89,5 +88,5 @@ func Info2String(info *Info) string {
 		infoString = append(infoString, s)
 	}
 
-	return strings.Join(infoString, "AND") + " Order by id;"
+	return strings.Join(infoString, "AND")
 }

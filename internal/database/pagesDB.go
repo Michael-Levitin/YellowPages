@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"github.com/Michael-Levitin/YellowPages/internal/dto"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,13 +18,15 @@ RETURNING id;`
 SELECT id, name, surname, patronymic, age, sex, country
 FROM people_data
 WHERE`
-	//WHERE name ILIKE @name;` // works
-	//WHERE @name is null OR name ILIKE @name;` // doesn't
-
+	_delInfoQuery = `
+DELETE from people_data
+WHERE`
+	_retId = `
+RETURNING id;
+`
+	_retAll = `
+RETURNING id, name, surname, patronymic, age, sex, country;`
 )
-
-//WHERE (@name is null OR name ILIKE @name) and
-//(@surname is null OR surname ILIKE @surname);`
 
 type PagesDB struct {
 	db *pgxpool.Pool
@@ -38,7 +41,7 @@ func (p PagesDB) GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, erro
 	//fmt.Println("query: ", _getInfoQuery+dto.Info2String(info))
 
 	rows, err := p.db.Query(context.TODO(),
-		_getInfoQuery+dto.Info2String(info),
+		_getInfoQuery+dto.Info2String(info)+" Order by id;",
 		pgx.NamedArgs(dto.Info2map(info)))
 	if err != nil {
 		log.Printf("Could not query %+v, %s", info, err)
@@ -62,4 +65,25 @@ func (p PagesDB) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error)
 		return &dto.Info{}, err
 	}
 	return info, nil
+}
+
+func (p PagesDB) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
+	where := dto.Info2String(info)
+	if where == " true " {
+		return &[]dto.Info{}, fmt.Errorf("clause cannot be empty")
+	}
+	rows, err := p.db.Query(context.TODO(),
+		_delInfoQuery+where+_retAll,
+		pgx.NamedArgs(dto.Info2map(info)))
+	if err != nil {
+		log.Printf("Could not query %+v, %s", info, err)
+		return &[]dto.Info{}, err
+	}
+
+	people, err := pgx.CollectRows(rows, pgx.RowToStructByName[dto.Info])
+	if err != nil {
+		log.Printf("CollectRows error: %v", err)
+		return &[]dto.Info{}, err
+	}
+	return &people, nil
 }

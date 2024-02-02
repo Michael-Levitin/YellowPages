@@ -38,6 +38,17 @@ func (p PagesLogic) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, err
 	return p.PagesDB.SetInfo(ctx, info)
 }
 
+func (p PagesLogic) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
+	people, err := p.PagesDB.DeleteInfo(ctx, info)
+	if err != nil {
+		return &[]dto.Info{}, err
+	}
+	if len(*people) == 0 {
+		return &[]dto.Info{}, fmt.Errorf("query found nothing - no rows were deleted")
+	}
+	return people, nil
+}
+
 func getAge(name string) (int, error) {
 	resp, err := http.Get("https://api.agify.io/?name=" + name)
 	if err != nil {

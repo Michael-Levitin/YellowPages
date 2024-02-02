@@ -32,6 +32,7 @@ func main() {
 
 	http.HandleFunc("/setInfo", pagesServer.SetInfo)
 	http.HandleFunc("/getInfo", pagesServer.GetInfo)
+	http.HandleFunc("/deleteInfo", pagesServer.DeleteInfo)
 	log.Println("server is running...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
