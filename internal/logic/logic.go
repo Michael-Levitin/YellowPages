@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/Michael-Levitin/YellowPages/internal/database"
 	"github.com/Michael-Levitin/YellowPages/internal/dto"
 	"net/http"
@@ -17,9 +18,16 @@ func NewPagesLogic(PagesDb database.PagesDbI) *PagesLogic {
 	return &PagesLogic{PagesDB: PagesDb}
 }
 
-func (p PagesLogic) GetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {
-	p.PagesDB.GetInfo(ctx, info)
-	return &dto.Info{}, nil
+func (p PagesLogic) GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
+	//fmt.Printf("Logic recieve %+v\n", info)
+	people, err := p.PagesDB.GetInfo(ctx, info)
+	if err != nil {
+		return &[]dto.Info{}, err
+	}
+	if len(*people) == 0 {
+		return &[]dto.Info{}, fmt.Errorf("query found nothing")
+	}
+	return people, nil
 }
 
 func (p PagesLogic) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {

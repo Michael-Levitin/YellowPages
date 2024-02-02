@@ -31,6 +31,7 @@ func main() {
 	pagesServer := delivery.NewPagesServer(pagesLogic) // ... а логику в библиотеку
 
 	http.HandleFunc("/setInfo", pagesServer.SetInfo)
+	http.HandleFunc("/getInfo", pagesServer.GetInfo)
 	log.Println("server is running...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

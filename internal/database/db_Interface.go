@@ -6,6 +6,6 @@ import (
 )
 
 type PagesDbI interface {
-	GetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error)
+	GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error)
 	SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error)
 }

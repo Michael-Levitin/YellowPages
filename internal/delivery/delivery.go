@@ -7,6 +7,7 @@ import (
 	"github.com/Michael-Levitin/YellowPages/internal/dto"
 	"github.com/Michael-Levitin/YellowPages/internal/logic"
 	"net/http"
+	"strconv"
 	"unicode"
 )
 
@@ -35,6 +36,25 @@ func (p PagesServer) SetInfo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(info)
 }
 
+func (p PagesServer) GetInfo(w http.ResponseWriter, r *http.Request) {
+	info, err := getParam(r)
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+
+	people, err := p.logic.GetInfo(context.TODO(), info)
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	for _, info := range *people {
+		json.NewEncoder(w).Encode(info)
+	}
+}
+
 func checkFIO(r *http.Request) (*dto.Info, error) {
 	var info dto.Info
 	queryParams := r.URL.Query() // Получаем все query параметры из URL запроса
@@ -50,8 +70,36 @@ func checkFIO(r *http.Request) (*dto.Info, error) {
 	}
 
 	if !isCapital(info.Name) || !isCapital(info.Surname) || !isCapital(info.Patronymic) {
-		return &dto.Info{}, fmt.Errorf("full name must be capitalizedddd")
+		return &dto.Info{}, fmt.Errorf("full name must be capitalized")
 	}
+	return &info, nil
+}
+
+func getParam(r *http.Request) (*dto.Info, error) {
+	var info dto.Info
+	var err error
+	queryParams := r.URL.Query()
+	idS := queryParams.Get("id")
+	if idS != "" {
+		info.Id, err = strconv.Atoi(idS)
+		if err != nil {
+			fmt.Println("delivery error: ", err)
+			return &dto.Info{}, err
+		}
+	}
+	info.Name = queryParams.Get("name")
+	info.Surname = queryParams.Get("surname")
+	info.Patronymic = queryParams.Get("patronymic")
+	ageS := queryParams.Get("age")
+	if ageS != "" {
+		info.Age, err = strconv.Atoi(ageS)
+		if err != nil {
+			fmt.Println("delivery error: ", err)
+			return &dto.Info{}, err
+		}
+	}
+	info.Sex = queryParams.Get("sex")
+	info.Country = queryParams.Get("country")
 	return &info, nil
 }
 
