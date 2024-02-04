@@ -17,6 +17,7 @@ func main() {
 	// загружаем конфиг
 	config.Init()
 	sc := config.New()
+	//logger := zerolog.New(os.Stdout)
 	zerolog.SetGlobalLevel(sc.LogLevel)
 
 	// подключаемся к базе данных
@@ -35,6 +36,7 @@ func main() {
 	http.HandleFunc("/setInfo", pagesServer.SetInfo)
 	http.HandleFunc("/getInfo", pagesServer.GetInfo)
 	http.HandleFunc("/deleteInfo", pagesServer.DeleteInfo)
+	http.HandleFunc("/updateInfo", pagesServer.UpdateInfo)
 	log.Info().Msg("server is running...")
 	err = http.ListenAndServe(":8080", nil)
 	log.Fatal().Err(err).Msg("http server crashed")

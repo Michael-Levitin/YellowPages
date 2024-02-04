@@ -11,21 +11,26 @@ import (
 
 const (
 	_setInfoQuery = `
-INSERT INTO people_data  (name, surname, patronymic, age, sex, country)
-VALUES (@name, @surname, @patronymic, @age, @sex, @country)
+INSERT INTO people_data  (name, surname, patronymic, age, gender, country)
+VALUES (@name, @surname, @patronymic, @age, @gender, @country)
 RETURNING id;`
 	_getInfoQuery = `
-SELECT id, name, surname, patronymic, age, sex, country
+SELECT id, name, surname, patronymic, age, gender, country
 FROM people_data
 WHERE`
 	_delInfoQuery = `
 DELETE from people_data
 WHERE`
+	_updateInfoQuery = `
+UPDATE people_data
+SET name = @name, surname = @surname, patronymic = @patronymic, age = @age, gender = @gender, country = @country
+WHERE id = @id
+`
 	_retId = `
 RETURNING id;
 `
 	_retAll = `
-RETURNING id, name, surname, patronymic, age, sex, country;`
+RETURNING id, name, surname, patronymic, age, gender, country;`
 )
 
 type PagesDB struct {
@@ -88,4 +93,18 @@ func (p PagesDB) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, e
 		return &[]dto.Info{}, err
 	}
 	return &people, nil
+}
+
+func (p PagesDB) UpdateInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {
+	res, err := p.db.Exec(context.TODO(), _updateInfoQuery, pgx.NamedArgs(dto.Info2map(info)))
+	if err != nil {
+		log.Debug().Err(err).Msg(fmt.Sprint("Could not query %+v", info))
+		return &dto.Info{}, err
+	}
+	n := res.RowsAffected()
+	if n == 0 {
+		return info, fmt.Errorf("Could not execute query")
+	}
+
+	return info, nil
 }

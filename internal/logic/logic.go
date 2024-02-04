@@ -41,6 +41,8 @@ func (p PagesLogic) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, err
 	return p.PagesDB.SetInfo(ctx, info)
 }
 
+// http://localhost:8080/setInfo?name=Andrej&surname=Sedov&patronymic=Aleksandorvich
+
 func (p PagesLogic) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
 	log.Trace().Msg(fmt.Sprintf("Logic recieved %+v\n", info))
 	people, err := p.PagesDB.DeleteInfo(ctx, info)
@@ -50,6 +52,16 @@ func (p PagesLogic) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info
 	}
 	if len(*people) == 0 {
 		return &[]dto.Info{}, fmt.Errorf("query found nothing - no rows were deleted")
+	}
+	return people, nil
+}
+
+func (p PagesLogic) UpdateInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {
+	log.Trace().Msg(fmt.Sprintf("Logic recieved %+v\n", info))
+	people, err := p.PagesDB.UpdateInfo(ctx, info)
+	if err != nil {
+		log.Warn().Err(err).Msg("error executing p.logic.DeleteInfo")
+		return &dto.Info{}, err
 	}
 	return people, nil
 }
@@ -110,8 +122,6 @@ func getNationality(name string) (string, error) {
 	return country, nil
 }
 
-// http://localhost:8080/setInfo?name=Andrej&surname=Sedov&patronymic=Aleksandorvich
-
 func getInfoApi(info *dto.Info) (*dto.Info, error) {
 	age, err := getAge(info.Name)
 	if err != nil {
@@ -119,11 +129,11 @@ func getInfoApi(info *dto.Info) (*dto.Info, error) {
 	}
 	info.Age = age
 
-	sex, err := getGender(info.Name)
+	gender, err := getGender(info.Name)
 	if err != nil {
 		return &dto.Info{}, err
 	}
-	info.Sex = sex
+	info.Gender = gender
 
 	country, err := getNationality(info.Name)
 	if err != nil {

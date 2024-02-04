@@ -10,7 +10,7 @@ type Info struct {
 	Surname    string `json:"surname" db:"surname"`
 	Patronymic string `json:"patronymic" db:"patronymic"`
 	Age        int    `json:"age" db:"age"`
-	Sex        string `json:"sex" db:"sex"`
+	Gender     string `json:"gender" db:"gender"`
 	Country    string `json:"country" db:"country"`
 }
 
@@ -44,7 +44,7 @@ func Info2map(info *Info) map[string]any {
 	infoMap["surname"] = info.Surname
 	infoMap["patronymic"] = info.Patronymic
 	infoMap["age"] = info.Age
-	infoMap["sex"] = info.Sex
+	infoMap["gender"] = info.Gender
 	infoMap["country"] = info.Country
 	return infoMap
 }
@@ -77,9 +77,9 @@ func Info2String(info *Info) string {
 		s = " age = @age "
 		infoString = append(infoString, s)
 	}
-	if info.Sex != "" {
-		info.Sex = "%" + info.Sex + "%"
-		s = " sex ILIKE @sex "
+	if info.Gender != "" {
+		info.Gender = "%" + info.Gender + "%"
+		s = " gender ILIKE @gender "
 		infoString = append(infoString, s)
 	}
 	if info.Country != "" {

@@ -21,7 +21,13 @@ func NewPagesServer(logic logic.PagesLogicI) *PagesServer {
 }
 
 func (p PagesServer) SetInfo(w http.ResponseWriter, r *http.Request) {
-	info, err := checkFIO(r)
+	info, err := getParam(r)
+	if err != nil {
+		log.Warn().Err(err).Msg("error reading parameters")
+		fmt.Fprintln(w, "error reading parameters")
+		return
+	}
+	err = checkFIO(info)
 	if err != nil {
 		log.Warn().Err(err).Msg("error checking full name")
 		fmt.Fprintln(w, "error checking full name: ", err)
@@ -42,8 +48,8 @@ func (p PagesServer) SetInfo(w http.ResponseWriter, r *http.Request) {
 func (p PagesServer) GetInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := getParam(r)
 	if err != nil {
-		log.Warn().Err(err).Msg("error checking full name")
-		fmt.Fprintln(w, "error checking full name: ", err)
+		log.Warn().Err(err).Msg("error reading parameters")
+		fmt.Fprintln(w, "error reading parameters")
 		return
 	}
 
@@ -81,24 +87,49 @@ func (p PagesServer) DeleteInfo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func checkFIO(r *http.Request) (*dto.Info, error) {
-	var info dto.Info
-	queryParams := r.URL.Query() // Получаем все query параметры из URL запроса
-	info.Name = queryParams.Get("name")
-	info.Surname = queryParams.Get("surname")
-	info.Patronymic = queryParams.Get("patronymic")
+func (p PagesServer) UpdateInfo(w http.ResponseWriter, r *http.Request) {
+	info, err := getParam(r)
+	if err != nil {
+		log.Warn().Err(err).Msg("error reading parameters")
+		fmt.Fprintln(w, "error reading parameters")
+		return
+	}
+	if info.Id == 0 {
+		fmt.Fprintln(w, "you must specify Id")
+		return
+	}
+	err = checkFIO(info)
+	if err != nil {
+		log.Warn().Err(err).Msg("error checking full name")
+		fmt.Fprintln(w, "error checking full name: ", err)
+		return
+	}
+
+	info, err = p.logic.UpdateInfo(context.TODO(), info)
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, "update info:\n")
+	json.NewEncoder(w).Encode(info)
+
+}
+
+func checkFIO(info *dto.Info) error {
 	if info.Name == "" || info.Surname == "" {
-		return &dto.Info{}, fmt.Errorf("both name and surname are required")
+		return fmt.Errorf("both name and surname are required")
 	}
 
 	if !isLetter(info.Name) || !isLetter(info.Surname) || !isLetter(info.Patronymic) {
-		return &dto.Info{}, fmt.Errorf("full name must contain letters only")
+		return fmt.Errorf("full name must contain letters only")
 	}
 
 	if !isCapital(info.Name) || !isCapital(info.Surname) || !isCapital(info.Patronymic) {
-		return &dto.Info{}, fmt.Errorf("full name must be capitalized")
+		return fmt.Errorf("full name must be capitalized")
 	}
-	return &info, nil
+	return nil
 }
 
 func getParam(r *http.Request) (*dto.Info, error) {
@@ -109,7 +140,7 @@ func getParam(r *http.Request) (*dto.Info, error) {
 	if idS != "" {
 		info.Id, err = strconv.Atoi(idS)
 		if err != nil {
-			fmt.Println("delivery error: ", err)
+			fmt.Println("delivery error: ", err) //TODO
 			return &dto.Info{}, err
 		}
 	}
@@ -124,7 +155,7 @@ func getParam(r *http.Request) (*dto.Info, error) {
 			return &dto.Info{}, err
 		}
 	}
-	info.Sex = queryParams.Get("sex")
+	info.Gender = queryParams.Get("gender")
 	info.Country = queryParams.Get("country")
 	return &info, nil
 }
