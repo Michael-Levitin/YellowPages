@@ -70,7 +70,7 @@ func (p PagesServer) DeleteInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := getParam(r)
 	if err != nil {
 		log.Warn().Err(err).Msg("error reading parameters")
-		fmt.Fprintln(w, "error reading parameters")
+		fmt.Fprintln(w, "error reading parameters", err)
 		return
 	}
 
@@ -91,7 +91,7 @@ func (p PagesServer) UpdateInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := getParam(r)
 	if err != nil {
 		log.Warn().Err(err).Msg("error reading parameters")
-		fmt.Fprintln(w, "error reading parameters")
+		fmt.Fprintln(w, "error reading parameters", err)
 		return
 	}
 	if info.Id == 0 {
@@ -140,8 +140,8 @@ func getParam(r *http.Request) (*dto.Info, error) {
 	if idS != "" {
 		info.Id, err = strconv.Atoi(idS)
 		if err != nil {
-			fmt.Println("delivery error: ", err) //TODO
-			return &dto.Info{}, err
+			log.Info().Err(err).Msg("couldn't get ID")
+			return &dto.Info{}, fmt.Errorf("couldn't get Id")
 		}
 	}
 	info.Name = queryParams.Get("name")
@@ -151,8 +151,8 @@ func getParam(r *http.Request) (*dto.Info, error) {
 	if ageS != "" {
 		info.Age, err = strconv.Atoi(ageS)
 		if err != nil {
-			fmt.Println("delivery error: ", err)
-			return &dto.Info{}, err
+			log.Info().Err(err).Msg("couldn't get Age")
+			return &dto.Info{}, fmt.Errorf("couldn't get Age")
 		}
 	}
 	info.Gender = queryParams.Get("gender")
@@ -162,11 +162,11 @@ func getParam(r *http.Request) (*dto.Info, error) {
 
 func isLetter(s string) bool {
 	for _, r := range s {
-		if unicode.IsLetter(r) {
-			return true
+		if !unicode.IsLetter(r) {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func isCapital(s string) bool {
@@ -175,8 +175,8 @@ func isCapital(s string) bool {
 		fl = r
 		break
 	}
-	if unicode.IsUpper(fl) {
-		return true
+	if !unicode.IsUpper(fl) {
+		return false
 	}
-	return false
+	return true
 }

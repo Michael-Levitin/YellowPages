@@ -23,8 +23,7 @@ func (p PagesLogic) GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, e
 	log.Trace().Msg(fmt.Sprintf("Logic recieved %+v\n", info))
 	people, err := p.PagesDB.GetInfo(ctx, info)
 	if err != nil {
-		log.Warn().Err(err).Msg("logic - GetInfo")
-		return &[]dto.Info{}, fmt.Errorf("query error")
+		return &[]dto.Info{}, err
 	}
 	if len(*people) == 0 {
 		return &[]dto.Info{}, fmt.Errorf("query found nothing")
@@ -60,7 +59,6 @@ func (p PagesLogic) UpdateInfo(ctx context.Context, info *dto.Info) (*dto.Info, 
 	log.Trace().Msg(fmt.Sprintf("Logic recieved %+v\n", info))
 	people, err := p.PagesDB.UpdateInfo(ctx, info)
 	if err != nil {
-		log.Warn().Err(err).Msg("error executing p.logic.DeleteInfo")
 		return &dto.Info{}, err
 	}
 	return people, nil
@@ -69,13 +67,15 @@ func (p PagesLogic) UpdateInfo(ctx context.Context, info *dto.Info) (*dto.Info, 
 func getAge(name string) (int, error) {
 	resp, err := http.Get("https://api.agify.io/?name=" + name)
 	if err != nil {
-		return 0, err
+		log.Info().Err(err).Msg("error getting age")
+		return 0, fmt.Errorf("error getting age")
 	}
 	defer resp.Body.Close()
 
 	var answer dto.Age
 	if err = json.NewDecoder(resp.Body).Decode(&answer); err != nil {
-		return 0, err
+		log.Info().Err(err).Msg("error decoding age")
+		return 0, fmt.Errorf("error getting age")
 	}
 
 	return answer.Age, nil
@@ -84,13 +84,15 @@ func getAge(name string) (int, error) {
 func getGender(name string) (string, error) {
 	resp, err := http.Get("https://api.genderize.io/?name=" + name)
 	if err != nil {
-		return "", err
+		log.Info().Err(err).Msg("error getting gender")
+		return "", fmt.Errorf("error getting gender")
 	}
 	defer resp.Body.Close()
 
 	var answer dto.Gender
 	if err = json.NewDecoder(resp.Body).Decode(&answer); err != nil {
-		return "", err
+		log.Info().Err(err).Msg("error decoding gender")
+		return "", fmt.Errorf("error getting gender")
 	}
 
 	return answer.Gender, nil
@@ -99,13 +101,15 @@ func getGender(name string) (string, error) {
 func getNationality(name string) (string, error) {
 	resp, err := http.Get("https://api.nationalize.io/?name=" + name)
 	if err != nil {
-		return "", err
+		log.Info().Err(err).Msg("error getting nationality")
+		return "", fmt.Errorf("error getting nationality")
 	}
 	defer resp.Body.Close()
 
 	var answer dto.Origin
 	if err = json.NewDecoder(resp.Body).Decode(&answer); err != nil {
-		return "", err
+		log.Info().Err(err).Msg("error decoding nationality")
+		return "", fmt.Errorf("error getting nationality")
 	}
 
 	var country string

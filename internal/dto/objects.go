@@ -1,7 +1,12 @@
 package dto
 
 import (
+	"fmt"
 	"strings"
+)
+
+var (
+	QueryExecuteErorr = fmt.Errorf("Could not execute query")
 )
 
 type Info struct {

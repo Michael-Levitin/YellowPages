@@ -46,18 +46,16 @@ func (p PagesDB) GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, erro
 	query := _getInfoQuery + dto.Info2String(info) + " Order by id;"
 	log.Trace().Msg(fmt.Sprintf("query: ", query))
 
-	rows, err := p.db.Query(context.TODO(),
-		query,
-		pgx.NamedArgs(dto.Info2map(info)))
+	rows, err := p.db.Query(context.TODO(), query, pgx.NamedArgs(dto.Info2map(info)))
 	if err != nil {
-		log.Debug().Msg(fmt.Sprintf("Could not query %+v, %s", info, err))
-		return &[]dto.Info{}, err
+		log.Debug().Err(err).Msg(fmt.Sprintf("GetInfo could not get %+v", info))
+		return &[]dto.Info{}, dto.QueryExecuteErorr
 	}
 
 	people, err := pgx.CollectRows(rows, pgx.RowToStructByName[dto.Info])
 	if err != nil {
-		log.Debug().Msg(fmt.Sprintf("CollectRows error: %v", err))
-		return &[]dto.Info{}, err
+		log.Debug().Err(err).Msg(fmt.Sprintf("CollectRows error"))
+		return &[]dto.Info{}, dto.QueryExecuteErorr
 	}
 	return &people, nil
 }
@@ -67,8 +65,8 @@ func (p PagesDB) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error)
 	err := p.db.QueryRow(context.TODO(), _setInfoQuery, pgx.NamedArgs(dto.Info2map(info))).Scan(&id)
 	info.Id = id
 	if err != nil {
-		log.Debug().Msg(fmt.Sprint("Could not add ", info, err))
-		return &dto.Info{}, err
+		log.Debug().Err(err).Msg(fmt.Sprintf("SetInfo could not set %+v", info))
+		return &dto.Info{}, dto.QueryExecuteErorr
 	}
 	return info, nil
 }
@@ -76,21 +74,21 @@ func (p PagesDB) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error)
 func (p PagesDB) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
 	where := dto.Info2String(info)
 	if where == " true " {
-		log.Info().Msg("empty clause atempt")
+		log.Warn().Msg("empty clause atempt")
 		return &[]dto.Info{}, fmt.Errorf("clause cannot be empty")
 	}
 	rows, err := p.db.Query(context.TODO(),
 		_delInfoQuery+where+_retAll,
 		pgx.NamedArgs(dto.Info2map(info)))
 	if err != nil {
-		log.Debug().Msg(fmt.Sprint("Could not query %+v, %s", info, err))
-		return &[]dto.Info{}, err
+		log.Debug().Err(err).Msg(fmt.Sprintf("DeleteInfo could not delete %+v", info))
+		return &[]dto.Info{}, dto.QueryExecuteErorr
 	}
 
 	people, err := pgx.CollectRows(rows, pgx.RowToStructByName[dto.Info])
 	if err != nil {
-		log.Debug().Msg(fmt.Sprint("CollectRows error: %v", err))
-		return &[]dto.Info{}, err
+		log.Debug().Err(err).Msg(fmt.Sprint("CollectRows error"))
+		return &[]dto.Info{}, dto.QueryExecuteErorr
 	}
 	return &people, nil
 }
@@ -98,12 +96,12 @@ func (p PagesDB) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, e
 func (p PagesDB) UpdateInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {
 	res, err := p.db.Exec(context.TODO(), _updateInfoQuery, pgx.NamedArgs(dto.Info2map(info)))
 	if err != nil {
-		log.Debug().Err(err).Msg(fmt.Sprint("Could not query %+v", info))
-		return &dto.Info{}, err
+		log.Debug().Err(err).Msg(fmt.Sprintf("UpdateInfo Could not update %+v", info))
+		return &dto.Info{}, dto.QueryExecuteErorr
 	}
 	n := res.RowsAffected()
 	if n == 0 {
-		return info, fmt.Errorf("Could not execute query")
+		return info, fmt.Errorf("query found nothing to update")
 	}
 
 	return info, nil
