@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Michael-Levitin/YellowPages/internal/dto"
 	"github.com/Michael-Levitin/YellowPages/internal/logic"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"strconv"
 	"unicode"
@@ -22,12 +23,14 @@ func NewPagesServer(logic logic.PagesLogicI) *PagesServer {
 func (p PagesServer) SetInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := checkFIO(r)
 	if err != nil {
-		fmt.Fprintln(w, err)
+		log.Warn().Err(err).Msg("error checking full name")
+		fmt.Fprintln(w, "error checking full name: ", err)
 		return
 	}
 
 	info, err = p.logic.SetInfo(context.TODO(), info)
 	if err != nil {
+		log.Warn().Err(err).Msg("error executing p.logic.SetInfo")
 		fmt.Fprintln(w, err)
 		return
 	}
@@ -39,12 +42,14 @@ func (p PagesServer) SetInfo(w http.ResponseWriter, r *http.Request) {
 func (p PagesServer) GetInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := getParam(r)
 	if err != nil {
-		fmt.Fprintln(w, err)
+		log.Warn().Err(err).Msg("error checking full name")
+		fmt.Fprintln(w, "error checking full name: ", err)
 		return
 	}
 
 	people, err := p.logic.GetInfo(context.TODO(), info)
 	if err != nil {
+		log.Warn().Err(err).Msg("error executing p.logic.GetInfo")
 		fmt.Fprintln(w, err)
 		return
 	}
@@ -58,7 +63,8 @@ func (p PagesServer) GetInfo(w http.ResponseWriter, r *http.Request) {
 func (p PagesServer) DeleteInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := getParam(r)
 	if err != nil {
-		fmt.Fprintln(w, err)
+		log.Warn().Err(err).Msg("error reading parameters")
+		fmt.Fprintln(w, "error reading parameters")
 		return
 	}
 

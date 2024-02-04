@@ -6,7 +6,7 @@ import (
 	"github.com/Michael-Levitin/YellowPages/internal/dto"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -37,20 +37,21 @@ func NewPagesDB(db *pgxpool.Pool) *PagesDB {
 }
 
 func (p PagesDB) GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
-	//fmt.Printf("DB recieve %+v\n", info)
-	//fmt.Println("query: ", _getInfoQuery+dto.Info2String(info))
+	log.Trace().Msg(fmt.Sprintf("DB recieve %+v\n", info))
+	query := _getInfoQuery + dto.Info2String(info) + " Order by id;"
+	log.Trace().Msg(fmt.Sprintf("query: ", query))
 
 	rows, err := p.db.Query(context.TODO(),
-		_getInfoQuery+dto.Info2String(info)+" Order by id;",
+		query,
 		pgx.NamedArgs(dto.Info2map(info)))
 	if err != nil {
-		log.Printf("Could not query %+v, %s", info, err)
+		log.Debug().Msg(fmt.Sprintf("Could not query %+v, %s", info, err))
 		return &[]dto.Info{}, err
 	}
 
 	people, err := pgx.CollectRows(rows, pgx.RowToStructByName[dto.Info])
 	if err != nil {
-		log.Printf("CollectRows error: %v", err)
+		log.Debug().Msg(fmt.Sprintf("CollectRows error: %v", err))
 		return &[]dto.Info{}, err
 	}
 	return &people, nil
@@ -61,7 +62,7 @@ func (p PagesDB) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error)
 	err := p.db.QueryRow(context.TODO(), _setInfoQuery, pgx.NamedArgs(dto.Info2map(info))).Scan(&id)
 	info.Id = id
 	if err != nil {
-		log.Println("Could not add ", info, err)
+		log.Debug().Msg(fmt.Sprint("Could not add ", info, err))
 		return &dto.Info{}, err
 	}
 	return info, nil
@@ -70,19 +71,20 @@ func (p PagesDB) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error)
 func (p PagesDB) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
 	where := dto.Info2String(info)
 	if where == " true " {
+		log.Info().Msg("empty clause atempt")
 		return &[]dto.Info{}, fmt.Errorf("clause cannot be empty")
 	}
 	rows, err := p.db.Query(context.TODO(),
 		_delInfoQuery+where+_retAll,
 		pgx.NamedArgs(dto.Info2map(info)))
 	if err != nil {
-		log.Printf("Could not query %+v, %s", info, err)
+		log.Debug().Msg(fmt.Sprint("Could not query %+v, %s", info, err))
 		return &[]dto.Info{}, err
 	}
 
 	people, err := pgx.CollectRows(rows, pgx.RowToStructByName[dto.Info])
 	if err != nil {
-		log.Printf("CollectRows error: %v", err)
+		log.Debug().Msg(fmt.Sprint("CollectRows error: %v", err))
 		return &[]dto.Info{}, err
 	}
 	return &people, nil

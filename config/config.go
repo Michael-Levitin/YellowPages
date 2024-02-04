@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
-	"log"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"os"
 )
 
@@ -12,14 +14,15 @@ type Config struct {
 	DbName     string
 	DbUsername string
 	DbPassword string
+	LogLevel   zerolog.Level
 }
 
 func Init() {
 	// загружаем данные из .env файла в систему
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("No .env file found")
+		log.Fatal().Err(err).Msg("No .env file found")
 	}
-	log.Println("loaded env values")
+	log.Info().Msg("loaded env values")
 }
 
 // New returns a new Config struct
@@ -30,6 +33,7 @@ func New() *Config {
 		DbName:     getEnv("DB_NAME", ""),
 		DbUsername: getEnv("DB_USERNAME", ""),
 		DbPassword: getEnv("DB_PASSWORD", ""),
+		LogLevel:   getLevel("LOG_LEVEL", "info"),
 	}
 }
 
@@ -40,7 +44,37 @@ func getEnv(key string, defaultVal string) string {
 		return value
 	}
 	if value == "" && defaultVal == "" {
-		log.Fatal(key, " value not found")
+		log.Fatal().Msg(fmt.Sprint(key, " value not found"))
 	}
 	return defaultVal
+}
+
+func getLevel(key string, defaultVal string) zerolog.Level {
+	var userLevel string
+	if value, exists := os.LookupEnv(key); exists {
+		userLevel = value
+	}
+
+	levelS := map[string]zerolog.Level{
+		"trace":    zerolog.TraceLevel,
+		"info":     zerolog.InfoLevel,
+		"warn":     zerolog.WarnLevel,
+		"error":    zerolog.ErrorLevel,
+		"fatal":    zerolog.FatalLevel,
+		"panic":    zerolog.PanicLevel,
+		"nolevel":  zerolog.NoLevel,
+		"disabled": zerolog.DebugLevel,
+	}
+
+	if level, exists := levelS[userLevel]; exists {
+		log.Info().Msg(fmt.Sprint("setting log level to ", userLevel))
+		return level
+	}
+
+	if level, exists := levelS[defaultVal]; exists {
+		log.Warn().Msg(fmt.Sprint("user log level not found, setting default value - ", defaultVal))
+		return level
+	}
+	log.Warn().Msg("log levels not found, setting log level to info")
+	return levelS["info"]
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Michael-Levitin/YellowPages/internal/database"
 	"github.com/Michael-Levitin/YellowPages/internal/dto"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -19,10 +20,11 @@ func NewPagesLogic(PagesDb database.PagesDbI) *PagesLogic {
 }
 
 func (p PagesLogic) GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
-	//fmt.Printf("Logic recieve %+v\n", info)
+	log.Trace().Msg(fmt.Sprintf("Logic recieved %+v\n", info))
 	people, err := p.PagesDB.GetInfo(ctx, info)
 	if err != nil {
-		return &[]dto.Info{}, err
+		log.Warn().Err(err).Msg("logic - GetInfo")
+		return &[]dto.Info{}, fmt.Errorf("query error")
 	}
 	if len(*people) == 0 {
 		return &[]dto.Info{}, fmt.Errorf("query found nothing")
@@ -31,6 +33,7 @@ func (p PagesLogic) GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, e
 }
 
 func (p PagesLogic) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error) {
+	log.Trace().Msg(fmt.Sprintf("Logic recieved %+v\n", info))
 	info, err := getInfoApi(info)
 	if err != nil {
 		return &dto.Info{}, err
@@ -39,8 +42,10 @@ func (p PagesLogic) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, err
 }
 
 func (p PagesLogic) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
+	log.Trace().Msg(fmt.Sprintf("Logic recieved %+v\n", info))
 	people, err := p.PagesDB.DeleteInfo(ctx, info)
 	if err != nil {
+		log.Warn().Err(err).Msg("error executing p.logic.DeleteInfo")
 		return &[]dto.Info{}, err
 	}
 	if len(*people) == 0 {
