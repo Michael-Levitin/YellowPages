@@ -19,6 +19,12 @@ type Info struct {
 	Country    string `json:"country" db:"country"`
 }
 
+type Page struct {
+	Page   int `json:"page" db:"page"`
+	Offset int `json:"offset" db:"offset"`
+	Limit  int `json:"limit" db:"limit"`
+}
+
 type Age struct {
 	Count int    `json:"count"`
 	Name  string `json:"name"`

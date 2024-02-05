@@ -10,6 +10,8 @@ import (
 	"net/http"
 )
 
+const RowsPerPage = 20
+
 type PagesLogic struct {
 	PagesDB database.PagesDbI
 }
@@ -19,9 +21,12 @@ func NewPagesLogic(PagesDb database.PagesDbI) *PagesLogic {
 	return &PagesLogic{PagesDB: PagesDb}
 }
 
-func (p PagesLogic) GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
+func (p PagesLogic) GetInfo(ctx context.Context, info *dto.Info, page *dto.Page) (*[]dto.Info, error) {
 	log.Trace().Msg(fmt.Sprintf("Logic recieved %+v\n", info))
-	people, err := p.PagesDB.GetInfo(ctx, info)
+	page.Limit = RowsPerPage
+	page.Offset = RowsPerPage * (page.Page - 1)
+
+	people, err := p.PagesDB.GetInfo(ctx, info, page)
 	if err != nil {
 		return &[]dto.Info{}, err
 	}
@@ -42,9 +47,12 @@ func (p PagesLogic) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, err
 
 // http://localhost:8080/setInfo?name=Andrej&surname=Sedov&patronymic=Aleksandorvich
 
-func (p PagesLogic) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
+func (p PagesLogic) DeleteInfo(ctx context.Context, info *dto.Info, page *dto.Page) (*[]dto.Info, error) {
 	log.Trace().Msg(fmt.Sprintf("Logic recieved %+v\n", info))
-	people, err := p.PagesDB.DeleteInfo(ctx, info)
+	page.Limit = RowsPerPage
+	page.Offset = RowsPerPage * (page.Page - 1)
+
+	people, err := p.PagesDB.DeleteInfo(ctx, info, page)
 	if err != nil {
 		log.Warn().Err(err).Msg("error executing p.logic.DeleteInfo")
 		return &[]dto.Info{}, err

@@ -18,19 +18,23 @@ RETURNING id;`
 SELECT id, name, surname, patronymic, age, gender, country
 FROM people_data
 WHERE`
+	_getEnd = `
+ORDER BY id
+LIMIT @limit OFFSET @offset;`
 	_delInfoQuery = `
-DELETE from people_data
-WHERE`
+with deleted as (
+    DELETE from people_data
+        WHERE`
+	_delEnd = `
+RETURNING id, name, surname, patronymic, age, gender, country)
+select *
+from deleted
+ORDER BY id
+LIMIT @limit OFFSET @offset;`
 	_updateInfoQuery = `
 UPDATE people_data
 SET name = @name, surname = @surname, patronymic = @patronymic, age = @age, gender = @gender, country = @country
-WHERE id = @id
-`
-	_retId = `
-RETURNING id;
-`
-	_retAll = `
-RETURNING id, name, surname, patronymic, age, gender, country;`
+WHERE id = @id`
 )
 
 type PagesDB struct {
@@ -41,12 +45,16 @@ func NewPagesDB(db *pgxpool.Pool) *PagesDB {
 	return &PagesDB{db: db}
 }
 
-func (p PagesDB) GetInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
+func (p PagesDB) GetInfo(ctx context.Context, info *dto.Info, page *dto.Page) (*[]dto.Info, error) {
 	log.Trace().Msg(fmt.Sprintf("DB recieve %+v\n", info))
-	query := _getInfoQuery + dto.Info2String(info) + " Order by id;"
+	query := _getInfoQuery + dto.Info2String(info) + _getEnd
 	log.Trace().Msg(fmt.Sprintf("query: ", query))
 
-	rows, err := p.db.Query(context.TODO(), query, pgx.NamedArgs(dto.Info2map(info)))
+	args := dto.Info2map(info)
+	args["limit"] = page.Limit
+	args["offset"] = page.Offset
+
+	rows, err := p.db.Query(context.TODO(), query, pgx.NamedArgs(args))
 	if err != nil {
 		log.Debug().Err(err).Msg(fmt.Sprintf("GetInfo could not get %+v", info))
 		return &[]dto.Info{}, dto.QueryExecuteErorr
@@ -71,15 +79,20 @@ func (p PagesDB) SetInfo(ctx context.Context, info *dto.Info) (*dto.Info, error)
 	return info, nil
 }
 
-func (p PagesDB) DeleteInfo(ctx context.Context, info *dto.Info) (*[]dto.Info, error) {
+func (p PagesDB) DeleteInfo(ctx context.Context, info *dto.Info, page *dto.Page) (*[]dto.Info, error) {
 	where := dto.Info2String(info)
 	if where == " true " {
 		log.Warn().Msg("empty clause atempt")
 		return &[]dto.Info{}, fmt.Errorf("clause cannot be empty")
 	}
+
+	args := dto.Info2map(info)
+	args["limit"] = page.Limit
+	args["offset"] = page.Offset
+
 	rows, err := p.db.Query(context.TODO(),
-		_delInfoQuery+where+_retAll,
-		pgx.NamedArgs(dto.Info2map(info)))
+		_delInfoQuery+where+_delEnd,
+		pgx.NamedArgs(args))
 	if err != nil {
 		log.Debug().Err(err).Msg(fmt.Sprintf("DeleteInfo could not delete %+v", info))
 		return &[]dto.Info{}, dto.QueryExecuteErorr

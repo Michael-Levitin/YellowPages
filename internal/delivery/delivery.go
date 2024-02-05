@@ -48,14 +48,19 @@ func (p PagesServer) SetInfo(w http.ResponseWriter, r *http.Request) {
 func (p PagesServer) GetInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := getParam(r)
 	if err != nil {
-		log.Warn().Err(err).Msg("error reading parameters")
-		fmt.Fprintln(w, "error reading parameters")
+		fmt.Fprintln(w, "error reading parameters: ", err)
 		return
 	}
 
-	people, err := p.logic.GetInfo(context.TODO(), info)
+	page, err := getPage(r)
 	if err != nil {
-		log.Warn().Err(err).Msg("error executing p.logic.GetInfo")
+		fmt.Fprintln(w, err)
+	} else {
+		fmt.Fprintln(w, "showing results from page", page.Page)
+	}
+
+	people, err := p.logic.GetInfo(context.TODO(), info, page)
+	if err != nil {
 		fmt.Fprintln(w, err)
 		return
 	}
@@ -69,12 +74,18 @@ func (p PagesServer) GetInfo(w http.ResponseWriter, r *http.Request) {
 func (p PagesServer) DeleteInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := getParam(r)
 	if err != nil {
-		log.Warn().Err(err).Msg("error reading parameters")
-		fmt.Fprintln(w, "error reading parameters", err)
+		fmt.Fprintln(w, "error reading parameters: ", err)
 		return
 	}
 
-	people, err := p.logic.DeleteInfo(context.TODO(), info)
+	page, err := getPage(r)
+	if err != nil {
+		fmt.Fprintln(w, err)
+	} else {
+		fmt.Fprintln(w, "showing result from page", page.Page)
+	}
+
+	people, err := p.logic.DeleteInfo(context.TODO(), info, page)
 	if err != nil {
 		fmt.Fprintln(w, err)
 		return
@@ -158,6 +169,25 @@ func getParam(r *http.Request) (*dto.Info, error) {
 	info.Gender = queryParams.Get("gender")
 	info.Country = queryParams.Get("country")
 	return &info, nil
+}
+
+func getPage(r *http.Request) (*dto.Page, error) {
+	var page dto.Page
+	var err error
+	queryParams := r.URL.Query()
+	pageS := queryParams.Get("page")
+	if pageS != "" {
+		page.Page, err = strconv.Atoi(pageS)
+		if err != nil {
+			log.Info().Err(err).Msg("couldn't get Page")
+		}
+	}
+	if page.Page == 0 {
+		return &dto.Page{
+			Page: 1,
+		}, fmt.Errorf("couldn't get page, setting page = 1")
+	}
+	return &page, nil
 }
 
 func isLetter(s string) bool {
